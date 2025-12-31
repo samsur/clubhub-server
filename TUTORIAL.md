@@ -5,6 +5,7 @@ Welcome! In this tutorial, you'll learn how to build a simple REST API from scra
 ## What You'll Build
 
 A REST API with these endpoints:
+
 - GET `/clubs` - Get all clubs
 - GET `/clubs/<id>` - Get a specific club
 - POST `/clubs` - Create a new club
@@ -40,6 +41,7 @@ flask-cors==4.0.0
 ```
 
 **What are these?**
+
 - **Flask**: A lightweight web framework for Python
 - **flask-cors**: Enables Cross-Origin Resource Sharing (allows your frontend to talk to your backend)
 
@@ -62,6 +64,7 @@ from flask_cors import CORS
 ```
 
 **What do these imports do?**
+
 - `sqlite3`: Built-in Python library for SQLite database
 - `Flask, request, jsonify`: Core Flask components for building web APIs
 - `CORS`: Handles cross-origin requests
@@ -87,6 +90,7 @@ def get_db_connection():
 ```
 
 **What's happening here?**
+
 - `DATABASE`: Name of our SQLite database file
 - `get_db_connection()`: Function that creates a connection to the database
 - `row_factory`: Allows us to access database rows like dictionaries
@@ -112,6 +116,7 @@ def init_db():
 ```
 
 **What does this do?**
+
 - Creates a table called `club` with 5 fields
 - `id`: Auto-incrementing unique identifier
 - `name`: Required text field
@@ -127,10 +132,10 @@ def get_clubs():
         conn = get_db_connection()
         clubs = conn.execute('SELECT * FROM club').fetchall()
         conn.close()
-        
+
         # Convert rows to dictionaries
         clubs_list = [dict(club) for club in clubs]
-        
+
         return jsonify(clubs_list), 200
     except Exception as e:
         return jsonify({
@@ -140,6 +145,7 @@ def get_clubs():
 ```
 
 **What's happening here?**
+
 - `@app.route('/clubs', methods=['GET'])`: Decorator that defines the endpoint
 - `SELECT * FROM club`: SQL query to get all clubs
 - `[dict(club) for club in clubs]`: Converts database rows to dictionaries
@@ -157,13 +163,13 @@ def get_club(club_id):
         conn = get_db_connection()
         club = conn.execute('SELECT * FROM club WHERE id = ?', (club_id,)).fetchone()
         conn.close()
-        
+
         if club is None:
             return jsonify({
                 'success': False,
                 'error': 'Club not found'
             }), 404
-        
+
         return jsonify({
             'success': True,
             'club': dict(club)
@@ -176,6 +182,7 @@ def get_club(club_id):
 ```
 
 **Key points:**
+
 - `<int:club_id>`: URL parameter that must be an integer
 - `WHERE id = ?`: SQL query with parameter (prevents SQL injection)
 - `404`: HTTP status code for "not found"
@@ -189,19 +196,19 @@ def create_club():
     try:
         # Get data from request body
         data = request.get_json()
-        
+
         # Validate required fields
         if not data or 'name' not in data:
             return jsonify({
                 'success': False,
                 'error': 'Name is required'
             }), 400
-        
+
         name = data.get('name')
         description = data.get('description', '')
         member_count = data.get('memberCount', 0)
         image = data.get('image', '')
-        
+
         # Insert into database
         conn = get_db_connection()
         cursor = conn.execute(
@@ -211,7 +218,7 @@ def create_club():
         conn.commit()
         club_id = cursor.lastrowid
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'message': 'Club created successfully',
@@ -225,6 +232,7 @@ def create_club():
 ```
 
 **Key points:**
+
 - `request.get_json()`: Extracts JSON data from the request body
 - `data.get('name')`: Safely gets a value from the dictionary
 - `INSERT INTO`: SQL query to add new data
@@ -240,22 +248,22 @@ def delete_club(club_id):
     """DELETE endpoint to delete a club by ID"""
     try:
         conn = get_db_connection()
-        
+
         # Check if club exists
         club = conn.execute('SELECT * FROM club WHERE id = ?', (club_id,)).fetchone()
-        
+
         if club is None:
             conn.close()
             return jsonify({
                 'success': False,
                 'error': 'Club not found'
             }), 404
-        
+
         # Delete the club
         conn.execute('DELETE FROM club WHERE id = ?', (club_id,))
         conn.commit()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'message': 'Club deleted successfully'
@@ -290,7 +298,7 @@ def home():
 if __name__ == '__main__':
     # Initialize database when app starts
     init_db()
-    
+
     # Run the Flask app
     print("Starting Club Hub Server...")
     print("Visit http://localhost:5000 to see the API")
@@ -298,6 +306,7 @@ if __name__ == '__main__':
 ```
 
 **What does this do?**
+
 - `if __name__ == '__main__'`: Only runs if this file is executed directly
 - `init_db()`: Creates the database and table
 - `app.run()`: Starts the Flask development server
@@ -328,6 +337,7 @@ Visit http://localhost:5000 to see the API
 ### Test 1: Check the Home Page
 
 Open your browser and go to:
+
 ```
 http://localhost:5000/
 ```
@@ -337,6 +347,7 @@ You should see a JSON response with API information.
 ### Test 2: Get All Clubs (Empty at First)
 
 In your browser:
+
 ```
 http://localhost:5000/clubs
 ```
@@ -346,18 +357,21 @@ You should see an empty array: `[]`
 ### Test 3: Create a Club
 
 **Windows PowerShell:**
+
 ```powershell
 Invoke-RestMethod -Uri http://localhost:5000/clubs -Method Post -ContentType "application/json" -Body '{"name": "Coding Club", "description": "Learn to code together", "memberCount": 50, "image": "https://example.com/coding.jpg"}'
 ```
 
 **Linux/Mac:**
+
 ```bash
 curl -X POST http://localhost:5000/clubs \
   -H "Content-Type: application/json" \
-  -d '{"name": "Coding Club", "description": "Learn to code together", "memberCount": 50, "image": "https://example.com/coding.jpg"}'
+  -d '{"name": "Chess Club", "description": "Learn and play chess with fellow enthusiasts!", "memberCount": 75, "image": "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=400&h=300&fit=crop"}'
 ```
 
 You should see:
+
 ```json
 {
   "success": true,
@@ -371,6 +385,7 @@ You should see:
 Refresh `http://localhost:5000/clubs` in your browser.
 
 You should now see your club:
+
 ```json
 [
   {
@@ -390,11 +405,13 @@ Visit: `http://localhost:5000/clubs/1`
 ### Test 6: Delete a Club
 
 **Windows PowerShell:**
+
 ```powershell
 Invoke-RestMethod -Uri http://localhost:5000/clubs/1 -Method Delete
 ```
 
 **Linux/Mac:**
+
 ```bash
 curl -X DELETE http://localhost:5000/clubs/1
 ```
@@ -402,13 +419,16 @@ curl -X DELETE http://localhost:5000/clubs/1
 ## Understanding Key Concepts
 
 ### 1. REST API
+
 REST (Representational State Transfer) is a way to design APIs. It uses HTTP methods:
+
 - **GET**: Retrieve data
 - **POST**: Create new data
 - **PUT/PATCH**: Update data
 - **DELETE**: Delete data
 
 ### 2. HTTP Status Codes
+
 - **200**: Success
 - **201**: Created
 - **400**: Bad Request (client error)
@@ -416,7 +436,9 @@ REST (Representational State Transfer) is a way to design APIs. It uses HTTP met
 - **500**: Internal Server Error
 
 ### 3. JSON
+
 JavaScript Object Notation - a lightweight data format:
+
 ```json
 {
   "name": "Coding Club",
@@ -425,9 +447,11 @@ JavaScript Object Notation - a lightweight data format:
 ```
 
 ### 4. SQLite
+
 A lightweight database that stores data in a single file. Perfect for small projects and prototypes.
 
 ### 5. CORS
+
 Cross-Origin Resource Sharing allows your frontend (running on port 4200) to talk to your backend (running on port 5000).
 
 ## Common Issues and Solutions
@@ -437,6 +461,7 @@ Cross-Origin Resource Sharing allows your frontend (running on port 4200) to tal
 **Error:** `Address already in use`
 
 **Solution:** Change the port in `app.py`:
+
 ```python
 app.run(debug=True, host='0.0.0.0', port=3000)  # Changed to 3000
 ```
@@ -446,6 +471,7 @@ app.run(debug=True, host='0.0.0.0', port=3000)  # Changed to 3000
 **Error:** `ModuleNotFoundError: No module named 'flask'`
 
 **Solution:** Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -455,6 +481,7 @@ pip install -r requirements.txt
 **Error:** `database is locked`
 
 **Solution:** Make sure you're closing database connections:
+
 ```python
 conn.close()  # Always close connections!
 ```
@@ -492,4 +519,3 @@ Your final `app.py` should have approximately 170 lines and contain all the func
 - HTTP Status Codes: https://httpstatuses.com/
 
 Good luck with your hackathon project!
-
